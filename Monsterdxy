@@ -1,54 +1,52 @@
--- Custom UI TriggerBot (Optimized & Fast) for AOTR
--- Toggle Menu with: Right Shift
+-- Monster | AOTR Ultimate Core
+-- Security: Auto-Kick on wrong game
 
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
-
+local TeleportService = game:GetService("TeleportService")
 local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
 
--- Status Variablen
-local triggerEnabled = false
-local m1TriggerEnabled = false
-local isProcessing = false
-local uiVisible = true
+-- AOTR Universe/Place ID Check (Attack on Titan: Revolution)
+-- Schützt dein Skript, damit es nur in AOTR funktioniert
+local AOTR_GAME_ID = 13379208636 -- Hauptspiel ID von AOTR
 
--- Altes UI entfernen falls vorhanden
-if game.CoreGui:FindFirstChild("MonsterCustomUI") then
-    game.CoreGui.MonsterCustomUI:Destroy()
+if game.GameId ~= AOTR_GAME_ID then
+    -- Kickt den Spieler sofort mit einer sauberen Meldung, wenn es nicht AOTR ist
+    LocalPlayer:Kick("\n[Monster Security]\nDieses Skript funktioniert ausschließlich in Attack on Titan: Revolution (AOTR)!")
+    return
 end
 
--- ScreenGui erstellen
+-- Wenn das Spiel stimmt, lädt das UI:
+local UserInputService = game:GetService("UserInputService")
+local uiVisible = true
+
+if game.CoreGui:FindFirstChild("MonsterAOTR_UI") then
+    game.CoreGui.MonsterAOTR_UI:Destroy()
+end
+
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "MonsterCustomUI"
+ScreenGui.Name = "MonsterAOTR_UI"
 ScreenGui.Parent = game.CoreGui
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Hauptfenster (Frame)
 local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
 MainFrame.BorderSizePixel = 0
-MainFrame.Position = UDim2.new(0.5, -125, 0.5, -150)
-MainFrame.Size = UDim2.new(0, 250, 0, 300)
+MainFrame.Position = UDim2.new(0.5, -140, 0.5, -175)
+MainFrame.Size = UDim2.new(0, 280, 0, 350)
 
 local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 8)
+MainCorner.CornerRadius = UDim.new(0, 10)
 MainCorner.Parent = MainFrame
 
--- Oberer Balken (Titel)
 local TitleBar = Instance.new("Frame")
-TitleBar.Name = "TitleBar"
 TitleBar.Parent = MainFrame
-TitleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+TitleBar.BackgroundColor3 = Color3.fromRGB(28, 28, 35)
 TitleBar.BorderSizePixel = 0
-TitleBar.Size = UDim2.new(1, 0, 0, 40)
+TitleBar.Size = UDim2.new(1, 0, 0, 45)
 
 local TitleCorner = Instance.new("UICorner")
-TitleCorner.CornerRadius = UDim.new(0, 8)
+TitleCorner.CornerRadius = UDim.new(0, 10)
 TitleCorner.Parent = TitleBar
 
 local TitleLabel = Instance.new("TextLabel")
@@ -57,110 +55,17 @@ TitleLabel.BackgroundTransparency = 1
 TitleLabel.Position = UDim2.new(0, 15, 0, 0)
 TitleLabel.Size = UDim2.new(1, -15, 1, 0)
 TitleLabel.Font = Enum.Font.GothamBold
-TitleLabel.Text = "MONSTER | AOTR"
-TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TitleLabel.TextSize = 14
+TitleLabel.Text = "MONSTER | AOTR SECURE"
+TitleLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
+TitleLabel.TextSize = 13
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 
--- Container für Toggles
-local Container = Instance.new("ScrollingFrame")
-Container.Parent = MainFrame
-Container.Active = true
-Container.BackgroundTransparency = 1
-Container.Position = UDim2.new(0, 10, 0, 55)
-Container.Size = UDim2.new(1, -20, 1, -65)
-Container.CanvasSize = UDim2.new(0, 0, 0, 200)
-Container.ScrollBarThickness = 4
-
--- Funktion zum Erstellen von Toggles
-local function createToggle(name, defaultState, callback)
-    local ToggleButton = Instance.new("TextButton")
-    ToggleButton.Parent = Container
-    ToggleButton.BackgroundColor3 = defaultState and Color3.fromRGB(0, 170, 100) or Color3.fromRGB(40, 40, 50)
-    ToggleButton.Size = UDim2.new(1, 0, 0, 40)
-    ToggleButton.AutoButtonColor = false
-    ToggleButton.Font = Enum.Font.GothamSemibold
-    ToggleButton.Text = "  " .. name
-    ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    ToggleButton.TextSize, ToggleButton.TextXAlignment = 12, Enum.TextXAlignment.Left
-    
-    local ToggleCorner = Instance.new("UICorner")
-    ToggleCorner.CornerRadius = UDim.new(0, 6)
-    ToggleCorner.Parent = ToggleButton
-    
-    local State = defaultState
-    ToggleButton.MouseButton1Click:Connect(function()
-        State = not State
-        ToggleButton.BackgroundColor3 = State and Color3.fromRGB(0, 170, 100) or Color3.fromRGB(40, 40, 50)
-        callback(State)
-    end)
-    
-    -- Layout anpassen per Position (simpel gehalten)
-    return ToggleButton
-end
-
--- Layout-Helfer
-local yOffset = 0
-local function addUIElement(element)
-    element.Position = UDim2.new(0, 0, 0, yOffset)
-    yOffset = yOffset + 50
-end
-
--- Toggle 1: R-Key TriggerBot
-local t1 = createToggle("R-Key TriggerBot", false, function(value)
-    triggerEnabled = value
-end)
-addUIElement(t1)
-
--- Toggle 2: M1 TriggerBot
-local t2 = createToggle("M1 Click TriggerBot", false, function(value)
-    m1TriggerEnabled = value
-end)
-addUIElement(t2)
-
--- TriggerBot Logik
-local function checkTrigger()
-    if (not triggerEnabled and not m1TriggerEnabled) or isProcessing then return end
-    
-    local target = Mouse.Target
-    if target and target.Parent then
-        local character = target.Parent
-        local player = Players:GetPlayerFromCharacter(character)
-        
-        if player and player ~= LocalPlayer then
-            local humanoid = character:FindFirstChildOfClass("Humanoid")
-            if humanoid and humanoid.Health > 0 then
-                isProcessing = true
-                
-                -- Menschliches Delay gegen Anti-Cheat
-                task.wait(math.random(10, 25) / 1000)
-                
-                if triggerEnabled then
-                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.R, false, game)
-                    task.wait(0.01)
-                    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.R, false, game)
-                end
-                
-                if m1TriggerEnabled then
-                    local mouseLoc = UserInputService:GetMouseLocation()
-                    VirtualInputManager:SendMouseButtonEvent(mouseLoc.X, mouseLoc.Y, 0, true, game, 0)
-                    task.wait(0.01)
-                    VirtualInputManager:SendMouseButtonEvent(mouseLoc.X, mouseLoc.Y, 0, false, game, 0)
-                end
-                
-                task.wait(0.08)
-                isProcessing = false
-            end
-        end
-    end
-end
-
-RunService.Heartbeat:Connect(checkTrigger)
-
--- UI mit Right Shift öffnen/schließen
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
+-- Menü mit Right Shift umschalten
+UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.RightShift then
         uiVisible = not uiVisible
         MainFrame.Visible = uiVisible
     end
 end)
+
+print("[Monster] AOTR Verified & Loaded Successfully!")
