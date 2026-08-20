@@ -1,4 +1,4 @@
--- Monster | AOTR Advanced Tabbed UI (Draggable, Tabs & Smooth Toggles)
+-- Monster | AOTR Ultimate UI + Startup Warning
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -20,6 +20,50 @@ ScreenGui.Name = "MonsterAOTR_UI"
 ScreenGui.Parent = CoreGui
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
+-- STYLISCHE START-WARNUNG (NOTIFICATION)
+local NotifyFrame = Instance.new("Frame")
+NotifyFrame.Parent = ScreenGui
+NotifyFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+NotifyFrame.BorderSizePixel = 0
+NotifyFrame.Position = UDim2.new(1, -270, 1, -90)
+NotifyFrame.Size = UDim2.new(0, 250, 0, 60)
+
+local NotifyCorner = Instance.new("UICorner")
+NotifyCorner.CornerRadius = UDim.new(0, 8)
+NotifyCorner.Parent = NotifyFrame
+
+local NotifyTitle = Instance.new("TextLabel")
+NotifyTitle.Parent = NotifyFrame
+NotifyTitle.BackgroundTransparency = 1
+NotifyTitle.Position = UDim2.new(0, 15, 0, 8)
+NotifyTitle.Size = UDim2.new(1, -20, 0, 20)
+NotifyTitle.Font = Enum.Font.GothamBold
+NotifyTitle.Text = "⚠️ MONSTER SECURITY"
+NotifyTitle.TextColor3 = Color3.fromRGB(255, 170, 0)
+NotifyTitle.TextSize = 12
+NotifyTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+local NotifyDesc = Instance.new("TextLabel")
+NotifyDesc.Parent = NotifyFrame
+NotifyDesc.BackgroundTransparency = 1
+NotifyDesc.Position = UDim2.new(0, 15, 0, 28)
+NotifyDesc.Size = UDim2.new(1, -20, 0, 20)
+NotifyDesc.Font = Enum.Font.GothamMedium
+NotifyDesc.Text = "Skript erfolgreich geladen & sicher!"
+NotifyDesc.TextColor3 = Color3.fromRGB(200, 200, 200)
+NotifyDesc.TextSize = 11
+NotifyDesc.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Benachrichtigung nach 4 Sekunden automatisch ausblenden
+task.delay(4, function()
+    if NotifyFrame and NotifyFrame.Parent then
+        NotifyFrame:TweenPosition(UDim2.new(1, 20, 1, -90), Enum.EasingDirection.In, Enum.EasingStyle.Quad, 0.3, true, function()
+            NotifyFrame:Destroy()
+        end)
+    end
+end)
+
+-- HAUPTFENSTER
 local MainFrame = Instance.new("Frame")
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
@@ -52,9 +96,9 @@ TitleLabel.Text = "MONSTER | AOTR ULTIMATE"
 TitleLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
 TitleLabel.TextSize = 12
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-TitleLabel.Active = false -- Wichtig, damit das Dragging nicht blockiert wird!
+TitleLabel.Active = false
 
--- Sidebar für Tabs (Links)
+-- Sidebar für Tabs
 local Sidebar = Instance.new("Frame")
 Sidebar.Parent = MainFrame
 Sidebar.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
@@ -62,14 +106,12 @@ Sidebar.BorderSizePixel = 0
 Sidebar.Position = UDim2.new(0, 0, 0, 36)
 Sidebar.Size = UDim2.new(0, 120, 1, -36)
 
--- Inhaltsbereich (Rechts)
 local ContentHolder = Instance.new("Frame")
 ContentHolder.Parent = MainFrame
 ContentHolder.BackgroundTransparency = 1
 ContentHolder.Position = UDim2.new(0, 130, 0, 46)
 ContentHolder.Size = UDim2.new(1, -140, 1, -56)
 
--- Tab-Seiten erstellen
 local pages = {}
 local function createPage(name)
     local page = Instance.new("ScrollingFrame")
@@ -87,7 +129,6 @@ end
 local combatPage = createPage("Combat")
 local settingsPage = createPage("Settings")
 
--- Tab-Buttons in der Sidebar
 local tabButtons = {}
 local function createTabButton(name, yPos, targetPage)
     local btn = Instance.new("TextButton")
@@ -123,12 +164,11 @@ end
 createTabButton("Combat", 12, combatPage)
 createTabButton("Settings", 52, settingsPage)
 
--- Standardmäßig Combat-Tab anzeigen
 combatPage.Visible = true
 tabButtons[1].BackgroundColor3 = Color3.fromRGB(0, 170, 100)
 tabButtons[1].TextColor3 = Color3.fromRGB(255, 255, 255)
 
--- Moderne Toggles mit Animation
+-- Moderne Toggles
 local function createToggle(parent, name, yPos, callback)
     local toggleFrame = Instance.new("Frame")
     toggleFrame.Parent = parent
@@ -190,15 +230,12 @@ local function createToggle(parent, name, yPos, callback)
     end)
 end
 
--- Toggles im Combat Tab einfügen
 createToggle(combatPage, "Auto-Select A", 0, function(v) print("Auto A:", v) end)
 createToggle(combatPage, "Auto-Select B", 44, function(v) print("Auto B:", v) end)
 createToggle(combatPage, "Auto-Select C", 88, function(v) print("Auto C:", v) end)
-
--- Toggles im Settings Tab einfügen
 createToggle(settingsPage, "Safe Mode", 0, function(v) print("Safe Mode:", v) end)
 
--- Draggable Logik (Zuverlässig auf der Titelleiste)
+-- Draggable Logik
 local dragging, dragInput, dragStart, startPos
 TitleBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -235,4 +272,4 @@ UserInputService.InputBegan:Connect(function(input)
     end
 end)
 
-print("[Monster] Advanced Tabbed UI Loaded Successfully!")
+print("[Monster] Script loaded with startup notification!")
