@@ -1,4 +1,4 @@
--- Monsterdxy - AOT:R | Ultimate UI + Startup Warning
+-- Monsterdxy - AOT:R | Clean Tabbed UI
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -19,49 +19,6 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "MonsterAOTR_UI"
 ScreenGui.Parent = CoreGui
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
--- STYLISCHE START-WARNUNG (NOTIFICATION)
-local NotifyFrame = Instance.new("Frame")
-NotifyFrame.Parent = ScreenGui
-NotifyFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
-NotifyFrame.BorderSizePixel = 0
-NotifyFrame.Position = UDim2.new(1, -270, 1, -90)
-NotifyFrame.Size = UDim2.new(0, 250, 0, 60)
-
-local NotifyCorner = Instance.new("UICorner")
-NotifyCorner.CornerRadius = UDim.new(0, 8)
-NotifyCorner.Parent = NotifyFrame
-
-local NotifyTitle = Instance.new("TextLabel")
-NotifyTitle.Parent = NotifyFrame
-NotifyTitle.BackgroundTransparency = 1
-NotifyTitle.Position = UDim2.new(0, 15, 0, 8)
-NotifyTitle.Size = UDim2.new(1, -20, 0, 20)
-NotifyTitle.Font = Enum.Font.GothamBold
-NotifyTitle.Text = "⚠️ MONSTER SECURITY"
-NotifyTitle.TextColor3 = Color3.fromRGB(255, 170, 0)
-NotifyTitle.TextSize = 12
-NotifyTitle.TextXAlignment = Enum.TextXAlignment.Left
-
-local NotifyDesc = Instance.new("TextLabel")
-NotifyDesc.Parent = NotifyFrame
-NotifyDesc.BackgroundTransparency = 1
-NotifyDesc.Position = UDim2.new(0, 15, 0, 28)
-NotifyDesc.Size = UDim2.new(1, -20, 0, 20)
-NotifyDesc.Font = Enum.Font.GothamMedium
-NotifyDesc.Text = "Monsterdxy - AOT:R erfolgreich geladen!"
-NotifyDesc.TextColor3 = Color3.fromRGB(200, 200, 200)
-NotifyDesc.TextSize = 11
-NotifyDesc.TextXAlignment = Enum.TextXAlignment.Left
-
--- Benachrichtigung nach 4 Sekunden automatisch ausblenden
-task.delay(4, function()
-    if NotifyFrame and NotifyFrame.Parent then
-        NotifyFrame:TweenPosition(UDim2.new(1, 20, 1, -90), Enum.EasingDirection.In, Enum.EasingStyle.Quad, 0.3, true, function()
-            NotifyFrame:Destroy()
-        end)
-    end
-end)
 
 -- HAUPTFENSTER
 local MainFrame = Instance.new("Frame")
@@ -272,4 +229,4 @@ UserInputService.InputBegan:Connect(function(input)
     end
 end)
 
-print("[Monsterdxy] AOT:R Script successfully loaded!")
+print("[Monsterdxy] AOT:R Clean Script successfully loaded!")
