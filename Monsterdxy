@@ -1,0 +1,121 @@
+-- FPS Optimized TriggerBot using RenderStepped (Event-Based) - Dual Option: R-Key and M1
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "Monster",
+   LoadingTitle = "Loading TriggerBot... (FPS Fixed)",
+   LoadingSubtitle = "Optimized Version",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "TriggerBotTest",
+      FileName = "TriggerBotConfig"
+   }
+})
+
+local Tab = Window:CreateTab("Main", 4483362458)
+
+local TriggerSection = Tab:CreateSection("TriggerBot")
+
+local triggerEnabled = false
+local m1TriggerEnabled = false
+local isProcessing = false -- Verhindert Spam-Überlastung
+
+-- Dienste holen (Sehr Performance-schonend)
+local vim = game:GetService("VirtualInputManager")
+local runService = game:GetService("RunService")
+local players = game:GetService("Players")
+local localPlayer = players.LocalPlayer
+local mouse = localPlayer:GetMouse()
+
+-- Verbindungsspeicher für sauberes An-/Ausschalten
+local loopConnection = nil
+
+-- Diese Funktion läuft jetzt synchron mit deinen FPS
+local function checkTrigger()
+   if (not triggerEnabled and not m1TriggerEnabled) or isProcessing then return end
+   
+   local target = mouse.Target
+   if target and target.Parent then
+      local character = target.Parent
+      local player = players:GetPlayerFromCharacter(character)
+      
+      -- Schießt jetzt auf jeden anderen Spieler, egal in welchem Team er ist
+      if player and player ~= localPlayer then
+         isProcessing = true -- Blockiert weitere Prüfungen während des Klicks
+         
+         -- Führt die R-Taste aus, wenn die Option aktiv ist
+         if triggerEnabled then
+            vim:SendKeyEvent(true, Enum.KeyCode.R, false, game)
+            task.wait(0.02)
+            vim:SendKeyEvent(false, Enum.KeyCode.R, false, game)
+         end
+         
+         -- Führt den M1-Klick aus, wenn die Option aktiv ist
+         if m1TriggerEnabled then
+            local mouseLocation = game:GetService("UserInputService"):GetMouseLocation()
+            vim:SendMouseButtonEvent(mouseLocation.X, mouseLocation.Y, 0, true, game, 0)
+            task.wait(0.02)
+            vim:SendMouseButtonEvent(mouseLocation.X, mouseLocation.Y, 0, false, game, 0)
+         end
+         
+         task.wait(0.1) -- Höherer Debounce schont die FPS massiv
+         isProcessing = false
+      end
+   end
+end
+
+-- Startet oder stoppt die Haupt-Schleife basierend auf beiden Toggles
+local function updateLoop()
+   if triggerEnabled or m1TriggerEnabled then
+      if not loopConnection then
+         loopConnection = runService.RenderStepped:Connect(checkTrigger)
+      end
+   else
+      if loopConnection then
+         loopConnection:Disconnect()
+         loopConnection = nil
+      end
+      isProcessing = false
+   end
+end
+
+-- OPTION 1: R-TASTE TRIGGERBOT
+Tab:CreateToggle({
+   Name = "Enable TriggerBot (R-Key)",
+   CurrentValue = false,
+   Flag = "TriggerToggle",
+   Callback = function(Value)
+      triggerEnabled = Value
+      updateLoop()
+      if Value then
+         Rayfield:Notify({
+            Title = "TriggerBot R-Key",
+            Content = "Enabled - Lag-Free Mode",
+            Duration = 3,
+            Image = 4483362458
+         })
+      end
+   end,
+})
+
+-- OPTION 2: M1-KLICK TRIGGERBOT
+Tab:CreateToggle({
+   Name = "Enable M1 TriggerBot",
+   CurrentValue = false,
+   Flag = "M1TriggerToggle",
+   Callback = function(Value)
+      m1TriggerEnabled = Value
+      updateLoop()
+      if Value then
+         Rayfield:Notify({
+            Title = "TriggerBot M1",
+            Content = "Enabled - Auto-Spam M1 Mode",
+            Duration = 3,
+            Image = 4483362458
+         })
+      end
+   end,
+})
+
+Rayfield:LoadConfiguration()
