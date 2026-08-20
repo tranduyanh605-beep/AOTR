@@ -1,132 +1,166 @@
--- Modern UI TriggerBot (Optimized for AOTR)
--- Notice: Absolute protection against bans is technically impossible due to client-side execution.
+-- Custom UI TriggerBot (Optimized & Fast) for AOTR
+-- Toggle Menu with: Right Shift
 
-local Success, Rayfield = pcall(function()
-    return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-end)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 
-if not Success or not Rayfield then
-    warn("Failed to load Rayfield UI library.")
-    return
-end
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
 
-local Window = Rayfield:CreateWindow({
-    Name = "Monster | AOTR Advanced",
-    LoadingTitle = "Initializing Secure Environment...",
-    LoadingSubtitle = "By Monster",
-    ConfigurationSaving = {
-        Enabled = true,
-        FolderName = "MonsterConfigAOTR",
-        FileName = "Settings"
-    }
-})
-
-local MainTab = Window:CreateTab("Combat", 4483362458)
-local Section = MainTab:CreateSection("TriggerBot Settings")
-
--- Variablen
+-- Status Variablen
 local triggerEnabled = false
 local m1TriggerEnabled = false
 local isProcessing = false
+local uiVisible = true
 
--- Dienste
-local vim = game:GetService("VirtualInputManager")
-local runService = game:GetService("RunService")
-local players = game:GetService("Players")
-local userInput = game:GetService("UserInputService")
-local localPlayer = players.LocalPlayer
-local mouse = localPlayer:GetMouse()
+-- Altes UI entfernen falls vorhanden
+if game.CoreGui:FindFirstChild("MonsterCustomUI") then
+    game.CoreGui.MonsterCustomUI:Destroy()
+end
 
-local loopConnection = nil
+-- ScreenGui erstellen
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "MonsterCustomUI"
+ScreenGui.Parent = game.CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Zuverlässigere und sauberere Trigger-Logik
+-- Hauptfenster (Frame)
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.5, -125, 0.5, -150)
+MainFrame.Size = UDim2.new(0, 250, 0, 300)
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 8)
+MainCorner.Parent = MainFrame
+
+-- Oberer Balken (Titel)
+local TitleBar = Instance.new("Frame")
+TitleBar.Name = "TitleBar"
+TitleBar.Parent = MainFrame
+TitleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+TitleBar.BorderSizePixel = 0
+TitleBar.Size = UDim2.new(1, 0, 0, 40)
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 8)
+TitleCorner.Parent = TitleBar
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Parent = TitleBar
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Position = UDim2.new(0, 15, 0, 0)
+TitleLabel.Size = UDim2.new(1, -15, 1, 0)
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.Text = "MONSTER | AOTR"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextSize = 14
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Container für Toggles
+local Container = Instance.new("ScrollingFrame")
+Container.Parent = MainFrame
+Container.Active = true
+Container.BackgroundTransparency = 1
+Container.Position = UDim2.new(0, 10, 0, 55)
+Container.Size = UDim2.new(1, -20, 1, -65)
+Container.CanvasSize = UDim2.new(0, 0, 0, 200)
+Container.ScrollBarThickness = 4
+
+-- Funktion zum Erstellen von Toggles
+local function createToggle(name, defaultState, callback)
+    local ToggleButton = Instance.new("TextButton")
+    ToggleButton.Parent = Container
+    ToggleButton.BackgroundColor3 = defaultState and Color3.fromRGB(0, 170, 100) or Color3.fromRGB(40, 40, 50)
+    ToggleButton.Size = UDim2.new(1, 0, 0, 40)
+    ToggleButton.AutoButtonColor = false
+    ToggleButton.Font = Enum.Font.GothamSemibold
+    ToggleButton.Text = "  " .. name
+    ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ToggleButton.TextSize, ToggleButton.TextXAlignment = 12, Enum.TextXAlignment.Left
+    
+    local ToggleCorner = Instance.new("UICorner")
+    ToggleCorner.CornerRadius = UDim.new(0, 6)
+    ToggleCorner.Parent = ToggleButton
+    
+    local State = defaultState
+    ToggleButton.MouseButton1Click:Connect(function()
+        State = not State
+        ToggleButton.BackgroundColor3 = State and Color3.fromRGB(0, 170, 100) or Color3.fromRGB(40, 40, 50)
+        callback(State)
+    end)
+    
+    -- Layout anpassen per Position (simpel gehalten)
+    return ToggleButton
+end
+
+-- Layout-Helfer
+local yOffset = 0
+local function addUIElement(element)
+    element.Position = UDim2.new(0, 0, 0, yOffset)
+    yOffset = yOffset + 50
+end
+
+-- Toggle 1: R-Key TriggerBot
+local t1 = createToggle("R-Key TriggerBot", false, function(value)
+    triggerEnabled = value
+end)
+addUIElement(t1)
+
+-- Toggle 2: M1 TriggerBot
+local t2 = createToggle("M1 Click TriggerBot", false, function(value)
+    m1TriggerEnabled = value
+end)
+addUIElement(t2)
+
+-- TriggerBot Logik
 local function checkTrigger()
     if (not triggerEnabled and not m1TriggerEnabled) or isProcessing then return end
     
-    local target = mouse.Target
+    local target = Mouse.Target
     if target and target.Parent then
         local character = target.Parent
-        local player = players:GetPlayerFromCharacter(character)
+        local player = Players:GetPlayerFromCharacter(character)
         
-        -- Überprüft, ob es sich um einen gültigen, lebenden Spieler handelt
-        if player and player ~= localPlayer then
+        if player and player ~= LocalPlayer then
             local humanoid = character:FindFirstChildOfClass("Humanoid")
             if humanoid and humanoid.Health > 0 then
                 isProcessing = true
                 
-                -- Zufällige minimale Verzögerung simuliert menschliches Verhalten (schützt vor automatischen Bans)
-                task.wait(math.random(10, 30) / 1000)
+                -- Menschliches Delay gegen Anti-Cheat
+                task.wait(math.random(10, 25) / 1000)
                 
                 if triggerEnabled then
-                    vim:SendKeyEvent(true, Enum.KeyCode.R, false, game)
+                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.R, false, game)
                     task.wait(0.01)
-                    vim:SendKeyEvent(false, Enum.KeyCode.R, false, game)
+                    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.R, false, game)
                 end
                 
                 if m1TriggerEnabled then
-                    local mouseLoc = userInput:GetMouseLocation()
-                    vim:SendMouseButtonEvent(mouseLoc.X, mouseLoc.Y, 0, true, game, 0)
+                    local mouseLoc = UserInputService:GetMouseLocation()
+                    VirtualInputManager:SendMouseButtonEvent(mouseLoc.X, mouseLoc.Y, 0, true, game, 0)
                     task.wait(0.01)
-                    vim:SendMouseButtonEvent(mouseLoc.X, mouseLoc.Y, 0, false, game, 0)
+                    VirtualInputManager:SendMouseButtonEvent(mouseLoc.X, mouseLoc.Y, 0, false, game, 0)
                 end
                 
-                task.wait(0.08) -- Debounce, um Spam zu verhindern
+                task.wait(0.08)
                 isProcessing = false
             end
         end
     end
 end
 
-local function updateLoop()
-    if triggerEnabled or m1TriggerEnabled then
-        if not loopConnection then
-            -- Nutzen von Heartbeat für stabilere Ausführung
-            loopConnection = runService.Heartbeat:Connect(checkTrigger)
-        end
-    else
-        if loopConnection then
-            loopConnection:Disconnect()
-            loopConnection = nil
-        end
-        isProcessing = false
+RunService.Heartbeat:Connect(checkTrigger)
+
+-- UI mit Right Shift öffnen/schließen
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if input.KeyCode == Enum.KeyCode.RightShift then
+        uiVisible = not uiVisible
+        MainFrame.Visible = uiVisible
     end
-end
-
--- UI Elemente (Neues Design)
-MainTab:CreateToggle({
-    Name = "R-Key TriggerBot",
-    CurrentValue = false,
-    Flag = "RKeyToggle",
-    Callback = function(Value)
-        triggerEnabled = Value
-        updateLoop()
-        if Value then
-            Rayfield:Notify({
-                Title = "Module Active",
-                Content = "R-Key TriggerBot enabled.",
-                Duration = 2,
-                Image = 4483362458
-            })
-        end
-    end,
-})
-
-MainTab:CreateToggle({
-    Name = "M1 (Click) TriggerBot",
-    CurrentValue = false,
-    Flag = "M1Toggle",
-    Callback = function(Value)
-        m1TriggerEnabled = Value
-        updateLoop()
-        if Value then
-            Rayfield:Notify({
-                Title = "Module Active",
-                Content = "M1 TriggerBot enabled.",
-                Duration = 2,
-                Image = 4483362458
-            })
-        end
-    end,
-})
-
-Rayfield:LoadConfiguration()
+end)
