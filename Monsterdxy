@@ -1,15 +1,7 @@
--- Monster | AOTR Secure Core
+-- Monster | AOTR Ultimate UI
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
-
--- Exakter AOTR Place-ID Check (13379208636)
-local AOTR_ID = 13379208636
-
-if game.PlaceId ~= AOTR_ID then
-    LocalPlayer:Kick("\n[Monster Security]\nFalsches Spiel! Dieses Skript läuft NUR in Attack on Titan: Revolution (AOTR).")
-    return
-end
 
 -- Altes UI entfernen falls vorhanden
 if game.CoreGui:FindFirstChild("MonsterAOTR_UI") then
@@ -63,4 +55,4 @@ UserInputService.InputBegan:Connect(function(input)
     end
 end)
 
-print("[Monster] AOTR erfolgreich erkannt und UI geladen!")
+print("[Monster] Skript erfolgreich geladen!")
