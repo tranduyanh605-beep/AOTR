@@ -1,8 +1,42 @@
--- Monsterdxy - AOT:R | Clean Tabbed UI
+-- Monsterdxy - AOT:R | Expanded UI, Lobby Tab & Auto-Save Config
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
+
+-- KONFIGURATIONS-SYSTEM (Speichert Einstellungen automatisch)
+local folderName = "Monsterdxy_AOTR"
+local fileName = "Monsterdxy_AOTR/config.json"
+
+local config = {
+    AutoA = false,
+    AutoB = false,
+    AutoC = false,
+    AutoQueue = false,
+    AutoReady = false,
+    SafeMode = false
+}
+
+local function saveConfig()
+    pcall(function()
+        if not isfolder(folderName) then makefolder(folderName) end
+        writefile(fileName, HttpService:JSONEncode(config))
+    end)
+end
+
+local function loadConfig()
+    pcall(function()
+        if isfile(fileName) then
+            local decoded = HttpService:JSONDecode(readfile(fileName))
+            for k, v in pairs(decoded) do
+                config[k] = v
+            end
+        end
+    end)
+end
+
+loadConfig()
 
 -- Sicherer UI-Container
 local CoreGui = nil
@@ -14,22 +48,21 @@ if CoreGui:FindFirstChild("MonsterAOTR_UI") then
     CoreGui.MonsterAOTR_UI:Destroy()
 end
 
--- Hauptfenster (ScreenGui)
+-- Hauptfenster (ScreenGui) - VIEL GRÖSSER GEMACHT
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "MonsterAOTR_UI"
 ScreenGui.Parent = CoreGui
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- HAUPTFENSTER
 local MainFrame = Instance.new("Frame")
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
 MainFrame.BorderSizePixel = 0
-MainFrame.Position = UDim2.new(0.5, -230, 0.5, -150)
-MainFrame.Size = UDim2.new(0, 460, 0, 310)
+MainFrame.Position = UDim2.new(0.5, -310, 0.5, -200)
+MainFrame.Size = UDim2.new(0, 620, 0, 400) -- Grichere Maße
 
 local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 8)
+MainCorner.CornerRadius = UDim.new(0, 10)
 MainCorner.Parent = MainFrame
 
 -- Titelleiste (Zum Bewegen des Fensters)
@@ -37,10 +70,10 @@ local TitleBar = Instance.new("Frame")
 TitleBar.Parent = MainFrame
 TitleBar.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
 TitleBar.BorderSizePixel = 0
-TitleBar.Size = UDim2.new(1, 0, 0, 36)
+TitleBar.Size = UDim2.new(1, 0, 0, 40)
 
 local TitleCorner = Instance.new("UICorner")
-TitleCorner.CornerRadius = UDim.new(0, 8)
+TitleCorner.CornerRadius = UDim.new(0, 10)
 TitleCorner.Parent = TitleBar
 
 local TitleLabel = Instance.new("TextLabel")
@@ -49,25 +82,25 @@ TitleLabel.BackgroundTransparency = 1
 TitleLabel.Position = UDim2.new(0, 15, 0, 0)
 TitleLabel.Size = UDim2.new(1, -15, 1, 0)
 TitleLabel.Font = Enum.Font.GothamBold
-TitleLabel.Text = "Monsterdxy - AOT:R" -- TITEL
+TitleLabel.Text = "Monsterdxy - AOT:R"
 TitleLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
-TitleLabel.TextSize = 12
+TitleLabel.TextSize = 14
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 TitleLabel.Active = false
 
--- Sidebar für Tabs
+-- Sidebar für Tabs (Größer skaliert)
 local Sidebar = Instance.new("Frame")
 Sidebar.Parent = MainFrame
 Sidebar.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
 Sidebar.BorderSizePixel = 0
-Sidebar.Position = UDim2.new(0, 0, 0, 36)
-Sidebar.Size = UDim2.new(0, 120, 1, -36)
+Sidebar.Position = UDim2.new(0, 0, 0, 40)
+Sidebar.Size = UDim2.new(0, 160, 1, -40)
 
 local ContentHolder = Instance.new("Frame")
 ContentHolder.Parent = MainFrame
 ContentHolder.BackgroundTransparency = 1
-ContentHolder.Position = UDim2.new(0, 130, 0, 46)
-ContentHolder.Size = UDim2.new(1, -140, 1, -56)
+ContentHolder.Position = UDim2.new(0, 175, 0, 52)
+ContentHolder.Size = UDim2.new(1, -190, 1, -64)
 
 local pages = {}
 local function createPage(name)
@@ -77,13 +110,14 @@ local function createPage(name)
     page.BackgroundTransparency = 1
     page.Size = UDim2.new(1, 0, 1, 0)
     page.Visible = false
-    page.CanvasSize = UDim2.new(0, 0, 0, 200)
-    page.ScrollBarThickness = 3
+    page.CanvasSize = UDim2.new(0, 0, 0, 300)
+    page.ScrollBarThickness = 4
     pages[name] = page
     return page
 end
 
-local mainMenuPage = createPage("Main Menu") -- SEITE
+local mainMenuPage = createPage("Main Menu")
+local lobbyPage = createPage("Lobby")
 local settingsPage = createPage("Settings")
 
 local tabButtons = {}
@@ -92,13 +126,13 @@ local function createTabButton(name, yPos, targetPage)
     btn.Parent = Sidebar
     btn.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
     btn.BorderSizePixel = 0
-    btn.Position = UDim2.new(0, 8, 0, yPos)
-    btn.Size = UDim2.new(1, -16, 0, 32)
+    btn.Position = UDim2.new(0, 10, 0, yPos)
+    btn.Size = UDim2.new(1, -20, 0, 36)
     btn.AutoButtonColor = false
     btn.Font = Enum.Font.GothamSemibold
     btn.Text = name
     btn.TextColor3 = Color3.fromRGB(180, 180, 190)
-    btn.TextSize = 12
+    btn.TextSize = 13
 
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 6)
@@ -118,21 +152,23 @@ local function createTabButton(name, yPos, targetPage)
     return btn
 end
 
-createTabButton("Main Menu", 12, mainMenuPage) -- TAB NAME
-createTabButton("Settings", 52, settingsPage)
+-- Tabs in der Sidebar platzieren
+createTabButton("Main Menu", 15, mainMenuPage)
+createTabButton("Lobby", 60, lobbyPage)
+createTabButton("Settings", 105, settingsPage)
 
 mainMenuPage.Visible = true
 tabButtons[1].BackgroundColor3 = Color3.fromRGB(0, 170, 100)
 tabButtons[1].TextColor3 = Color3.fromRGB(255, 255, 255)
 
--- Moderne Toggles
-local function createToggle(parent, name, yPos, callback)
+-- Moderne Toggles (verbunden mit dem Config-System)
+local function createToggle(parent, name, yPos, configKey, callback)
     local toggleFrame = Instance.new("Frame")
     toggleFrame.Parent = parent
     toggleFrame.BackgroundColor3 = Color3.fromRGB(26, 26, 34)
     toggleFrame.BorderSizePixel = 0
     toggleFrame.Position = UDim2.new(0, 0, 0, yPos)
-    toggleFrame.Size = UDim2.new(1, 0, 0, 36)
+    toggleFrame.Size = UDim2.new(1, 0, 0, 40)
 
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 6)
@@ -141,20 +177,20 @@ local function createToggle(parent, name, yPos, callback)
     local label = Instance.new("TextLabel")
     label.Parent = toggleFrame
     label.BackgroundTransparency = 1
-    label.Position = UDim2.new(0, 12, 0, 0)
-    label.Size = UDim2.new(1, -60, 1, 0)
+    label.Position = UDim2.new(0, 15, 0, 0)
+    label.Size = UDim2.new(1, -70, 1, 0)
     label.Font = Enum.Font.GothamMedium
     label.Text = name
     label.TextColor3 = Color3.fromRGB(230, 230, 230)
-    label.TextSize = 12
+    label.TextSize = 13
     label.TextXAlignment = Enum.TextXAlignment.Left
 
     local switch = Instance.new("TextButton")
     switch.Parent = toggleFrame
     switch.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
     switch.BorderSizePixel = 0
-    switch.Position = UDim2.new(1, -45, 0.5, -10)
-    switch.Size = UDim2.new(0, 36, 0, 20)
+    switch.Position = UDim2.new(1, -50, 0.5, -11)
+    switch.Size = UDim2.new(0, 40, 0, 22)
     switch.AutoButtonColor = false
     switch.Text = ""
 
@@ -166,31 +202,46 @@ local function createToggle(parent, name, yPos, callback)
     circle.Parent = switch
     circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     circle.BorderSizePixel = 0
-    circle.Position = UDim2.new(0, 2, 0.5, -8)
-    circle.Size = UDim2.new(0, 16, 0, 16)
+    circle.Position = UDim2.new(0, 2, 0.5, -9)
+    circle.Size = UDim2.new(0, 18, 0, 18)
 
     local circleCorner = Instance.new("UICorner")
     circleCorner.CornerRadius = UDim.new(1, 0)
     circleCorner.Parent = circle
 
-    local state = false
+    -- Initialer Zustand aus Config laden
+    local state = config[configKey] or false
+    if state then
+        switch.BackgroundColor3 = Color3.fromRGB(0, 170, 100)
+        circle.Position = UDim2.new(1, -20, 0.5, -9)
+    end
+    callback(state)
+
     switch.MouseButton1Click:Connect(function()
         state = not state
+        config[configKey] = state
+        saveConfig() -- Automatisch speichern bei Änderung!
+        
         if state then
             switch.BackgroundColor3 = Color3.fromRGB(0, 170, 100)
-            circle:TweenPosition(UDim2.new(1, -18, 0.5, -8), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
+            circle:TweenPosition(UDim2.new(1, -20, 0.5, -9), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
         else
             switch.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-            circle:TweenPosition(UDim2.new(0, 2, 0.5, -8), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
+            circle:TweenPosition(UDim2.new(0, 2, 0.5, -9), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
         end
         callback(state)
     end)
 end
 
-createToggle(mainMenuPage, "Auto-Select A", 0, function(v) print("Auto A:", v) end)
-createToggle(mainMenuPage, "Auto-Select B", 44, function(v) print("Auto B:", v) end)
-createToggle(mainMenuPage, "Auto-Select C", 88, function(v) print("Auto C:", v) end)
-createToggle(settingsPage, "Safe Mode", 0, function(v) print("Safe Mode:", v) end)
+-- Toggles belegen mit ihren Config-Keys
+createToggle(mainMenuPage, "Auto-Select A", 0, "AutoA", function(v) print("Auto A:", v) end)
+createToggle(mainMenuPage, "Auto-Select B", 50, "AutoB", function(v) print("Auto B:", v) end)
+createToggle(mainMenuPage, "Auto-Select C", 100, "AutoC", function(v) print("Auto C:", v) end)
+
+createToggle(lobbyPage, "Auto-Queue Match", 0, "AutoQueue", function(v) print("Auto Queue:", v) end)
+createToggle(lobbyPage, "Auto Ready Up", 50, "AutoReady", function(v) print("Auto Ready:", v) end)
+
+createToggle(settingsPage, "Safe Mode", 0, "SafeMode", function(v) print("Safe Mode:", v) end)
 
 -- Draggable Logik
 local dragging, dragInput, dragStart, startPos
@@ -229,4 +280,4 @@ UserInputService.InputBegan:Connect(function(input)
     end
 end)
 
-print("[Monsterdxy - AOT:R] Loaded successfully!")
+print("[Monsterdxy - AOT:R] Expanded UI with Config-System Loaded!")
