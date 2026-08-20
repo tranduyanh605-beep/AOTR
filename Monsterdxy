@@ -1,4 +1,4 @@
--- Monster | AOTR Ultimate UI + Startup Warning
+-- Monsterdxy - AOT:R | Ultimate UI + Startup Warning
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -49,7 +49,7 @@ NotifyDesc.BackgroundTransparency = 1
 NotifyDesc.Position = UDim2.new(0, 15, 0, 28)
 NotifyDesc.Size = UDim2.new(1, -20, 0, 20)
 NotifyDesc.Font = Enum.Font.GothamMedium
-NotifyDesc.Text = "Skript erfolgreich geladen & sicher!"
+NotifyDesc.Text = "Monsterdxy - AOT:R erfolgreich geladen!"
 NotifyDesc.TextColor3 = Color3.fromRGB(200, 200, 200)
 NotifyDesc.TextSize = 11
 NotifyDesc.TextXAlignment = Enum.TextXAlignment.Left
@@ -92,7 +92,7 @@ TitleLabel.BackgroundTransparency = 1
 TitleLabel.Position = UDim2.new(0, 15, 0, 0)
 TitleLabel.Size = UDim2.new(1, -15, 1, 0)
 TitleLabel.Font = Enum.Font.GothamBold
-TitleLabel.Text = "MONSTER | AOTR ULTIMATE"
+TitleLabel.Text = "Monsterdxy - AOT:R"
 TitleLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
 TitleLabel.TextSize = 12
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -126,7 +126,7 @@ local function createPage(name)
     return page
 end
 
-local combatPage = createPage("Combat")
+local mainMenuPage = createPage("Main Menu")
 local settingsPage = createPage("Settings")
 
 local tabButtons = {}
@@ -161,10 +161,10 @@ local function createTabButton(name, yPos, targetPage)
     return btn
 end
 
-createTabButton("Combat", 12, combatPage)
+createTabButton("Main Menu", 12, mainMenuPage)
 createTabButton("Settings", 52, settingsPage)
 
-combatPage.Visible = true
+mainMenuPage.Visible = true
 tabButtons[1].BackgroundColor3 = Color3.fromRGB(0, 170, 100)
 tabButtons[1].TextColor3 = Color3.fromRGB(255, 255, 255)
 
@@ -230,9 +230,9 @@ local function createToggle(parent, name, yPos, callback)
     end)
 end
 
-createToggle(combatPage, "Auto-Select A", 0, function(v) print("Auto A:", v) end)
-createToggle(combatPage, "Auto-Select B", 44, function(v) print("Auto B:", v) end)
-createToggle(combatPage, "Auto-Select C", 88, function(v) print("Auto C:", v) end)
+createToggle(mainMenuPage, "Auto-Select A", 0, function(v) print("Auto A:", v) end)
+createToggle(mainMenuPage, "Auto-Select B", 44, function(v) print("Auto B:", v) end)
+createToggle(mainMenuPage, "Auto-Select C", 88, function(v) print("Auto C:", v) end)
 createToggle(settingsPage, "Safe Mode", 0, function(v) print("Safe Mode:", v) end)
 
 -- Draggable Logik
@@ -272,4 +272,4 @@ UserInputService.InputBegan:Connect(function(input)
     end
 end)
 
-print("[Monster] Script loaded with startup notification!")
+print("[Monsterdxy] AOT:R Script successfully loaded!")
