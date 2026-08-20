@@ -1,28 +1,33 @@
--- Monster | AOTR Ultimate Core
--- Security: Auto-Kick on wrong game
-
+-- Monster | AOTR Ultimate Core (Fixed Game Check)
 local Players = game:GetService("Players")
-local TeleportService = game:GetService("TeleportService")
 local LocalPlayer = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
 
--- AOTR Universe/Place ID Check (Attack on Titan: Revolution)
--- Schützt dein Skript, damit es nur in AOTR funktioniert
-local AOTR_GAME_ID = 13379208636 -- Hauptspiel ID von AOTR
+-- Flexiblerer Check für AOTR (Erfasst Hauptspiel und verschiedene Unter-Orte/Lobbys)
+-- Wir prüfen, ob das Spiel überhaupt geladen ist und ob es zu AOTR gehört
+local success, errorMessage = pcall(function()
+    -- Attack on Titan: Revolution Universe / Place ID Check
+    local gameId = game.GameId
+    -- Bekannte GameID oder Name-Check als Sicherheit
+    if gameId ~= 3894766857 and game.PlaceId ~= 13379208636 then
+        -- Falls du in einem anderen Game bist, Test über Namen falls IDs abweichen
+        if not game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name:lower():find("titan") then
+            error("Not AOTR")
+        end
+    end
+end)
 
-if game.GameId ~= AOTR_GAME_ID then
-    -- Kickt den Spieler sofort mit einer sauberen Meldung, wenn es nicht AOTR ist
-    LocalPlayer:Kick("\n[Monster Security]\nDieses Skript funktioniert ausschließlich in Attack on Titan: Revolution (AOTR)!")
+if not success then
+    LocalPlayer:Kick("\n[Monster Security]\nDieses Skript funktioniert NUR in Attack on Titan: Revolution (AOTR)!")
     return
 end
 
--- Wenn das Spiel stimmt, lädt das UI:
-local UserInputService = game:GetService("UserInputService")
-local uiVisible = true
-
+-- Altes UI entfernen
 if game.CoreGui:FindFirstChild("MonsterAOTR_UI") then
     game.CoreGui.MonsterAOTR_UI:Destroy()
 end
 
+-- Neues Custom UI erstellen
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "MonsterAOTR_UI"
 ScreenGui.Parent = game.CoreGui
@@ -55,12 +60,13 @@ TitleLabel.BackgroundTransparency = 1
 TitleLabel.Position = UDim2.new(0, 15, 0, 0)
 TitleLabel.Size = UDim2.new(1, -15, 1, 0)
 TitleLabel.Font = Enum.Font.GothamBold
-TitleLabel.Text = "MONSTER | AOTR SECURE"
+TitleLabel.Text = "MONSTER | AOTR ULTIMATE"
 TitleLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
 TitleLabel.TextSize = 13
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 
--- Menü mit Right Shift umschalten
+-- Menü mit Right Shift ein-/ausblenden
+local uiVisible = true
 UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.RightShift then
         uiVisible = not uiVisible
@@ -68,4 +74,4 @@ UserInputService.InputBegan:Connect(function(input)
     end
 end)
 
-print("[Monster] AOTR Verified & Loaded Successfully!")
+print("[Monster] Erfolgreich in AOTR gestartet!")
