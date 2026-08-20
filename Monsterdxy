@@ -1,6 +1,4 @@
--- Monster | AOTR Ultimate UI (Draggable & Auto-Select A/B/C)
-print("[Monster] Loading Advanced Script...")
-
+-- Monster | AOTR Advanced Tabbed UI (Draggable, Tabs & Smooth Toggles)
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -8,19 +6,15 @@ local LocalPlayer = Players.LocalPlayer
 
 -- Sicherer UI-Container
 local CoreGui = nil
-local success, err = pcall(function()
-    CoreGui = gethui() or game:GetService("CoreGui")
-end)
-if not success or not CoreGui then
-    CoreGui = LocalPlayer:WaitForChild("PlayerGui")
-end
+pcall(function() CoreGui = gethui() or game:GetService("CoreGui") end)
+if not CoreGui then CoreGui = LocalPlayer:WaitForChild("PlayerGui") end
 
 -- Altes UI entfernen falls vorhanden
 if CoreGui:FindFirstChild("MonsterAOTR_UI") then
     CoreGui.MonsterAOTR_UI:Destroy()
 end
 
--- Neues Custom UI erstellen
+-- Hauptfenster (ScreenGui)
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "MonsterAOTR_UI"
 ScreenGui.Parent = CoreGui
@@ -30,22 +24,22 @@ local MainFrame = Instance.new("Frame")
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
 MainFrame.BorderSizePixel = 0
-MainFrame.Position = UDim2.new(0.5, -140, 0.5, -190)
-MainFrame.Size = UDim2.new(0, 280, 0, 380)
+MainFrame.Position = UDim2.new(0.5, -230, 0.5, -150)
+MainFrame.Size = UDim2.new(0, 460, 0, 310)
 
 local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 10)
+MainCorner.CornerRadius = UDim.new(0, 8)
 MainCorner.Parent = MainFrame
 
--- Titelleiste (Auch zum Bewegen des Fensters)
+-- Titelleiste (Zum Bewegen des Fensters)
 local TitleBar = Instance.new("Frame")
 TitleBar.Parent = MainFrame
-TitleBar.BackgroundColor3 = Color3.fromRGB(28, 28, 35)
+TitleBar.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
 TitleBar.BorderSizePixel = 0
-TitleBar.Size = UDim2.new(1, 0, 0, 45)
+TitleBar.Size = UDim2.new(1, 0, 0, 36)
 
 local TitleCorner = Instance.new("UICorner")
-TitleCorner.CornerRadius = UDim.new(0, 10)
+TitleCorner.CornerRadius = UDim.new(0, 8)
 TitleCorner.Parent = TitleBar
 
 local TitleLabel = Instance.new("TextLabel")
@@ -56,65 +50,155 @@ TitleLabel.Size = UDim2.new(1, -15, 1, 0)
 TitleLabel.Font = Enum.Font.GothamBold
 TitleLabel.Text = "MONSTER | AOTR ULTIMATE"
 TitleLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
-TitleLabel.TextSize = 13
+TitleLabel.TextSize = 12
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.Active = false -- Wichtig, damit das Dragging nicht blockiert wird!
 
--- Container für Inhalte
-local Container = Instance.new("ScrollingFrame")
-Container.Parent = MainFrame
-Container.Active = true
-Container.BackgroundTransparency = 1
-Container.Position = UDim2.new(0, 15, 0, 55)
-Container.Size = UDim2.new(1, -30, 1, -65)
-Container.CanvasSize = UDim2.new(0, 0, 0, 300)
-Container.ScrollBarThickness = 4
+-- Sidebar für Tabs (Links)
+local Sidebar = Instance.new("Frame")
+Sidebar.Parent = MainFrame
+Sidebar.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+Sidebar.BorderSizePixel = 0
+Sidebar.Position = UDim2.new(0, 0, 0, 36)
+Sidebar.Size = UDim2.new(0, 120, 1, -36)
 
--- Funktion zum Erstellen von Buttons/Toggles
-local function createButton(name, yPos, callback)
-    local Btn = Instance.new("TextButton")
-    Btn.Parent = Container
-    Btn.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-    Btn.Position = UDim2.new(0, 0, 0, yPos)
-    Btn.Size = UDim2.new(1, 0, 0, 40)
-    Btn.AutoButtonColor = false
-    Btn.Font = Enum.Font.GothamSemibold
-    Btn.Text = "  " .. name
-    Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Btn.TextSize = 12
-    Btn.TextXAlignment = Enum.TextXAlignment.Left
-    
-    local Corner = Instance.new("UICorner")
-    Corner.CornerRadius = UDim.new(0, 6)
-    Corner.Parent = Btn
-    
-    local active = false
-    Btn.MouseButton1Click:Connect(function()
-        active = not active
-        Btn.BackgroundColor3 = active and Color3.fromRGB(0, 170, 100) or Color3.fromRGB(35, 35, 45)
-        callback(active)
-    end)
-    return Btn
+-- Inhaltsbereich (Rechts)
+local ContentHolder = Instance.new("Frame")
+ContentHolder.Parent = MainFrame
+ContentHolder.BackgroundTransparency = 1
+ContentHolder.Position = UDim2.new(0, 130, 0, 46)
+ContentHolder.Size = UDim2.new(1, -140, 1, -56)
+
+-- Tab-Seiten erstellen
+local pages = {}
+local function createPage(name)
+    local page = Instance.new("ScrollingFrame")
+    page.Name = name .. "Page"
+    page.Parent = ContentHolder
+    page.BackgroundTransparency = 1
+    page.Size = UDim2.new(1, 0, 1, 0)
+    page.Visible = false
+    page.CanvasSize = UDim2.new(0, 0, 0, 200)
+    page.ScrollBarThickness = 3
+    pages[name] = page
+    return page
 end
 
--- Auto-Select Variablen
-local autoA, autoB, autoC = false, false, false
+local combatPage = createPage("Combat")
+local settingsPage = createPage("Settings")
 
-createButton("Auto Select: A", 0, function(state)
-    autoA = state
-    print("[Monster] Auto Select A:", state)
-end)
+-- Tab-Buttons in der Sidebar
+local tabButtons = {}
+local function createTabButton(name, yPos, targetPage)
+    local btn = Instance.new("TextButton")
+    btn.Parent = Sidebar
+    btn.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
+    btn.BorderSizePixel = 0
+    btn.Position = UDim2.new(0, 8, 0, yPos)
+    btn.Size = UDim2.new(1, -16, 0, 32)
+    btn.AutoButtonColor = false
+    btn.Font = Enum.Font.GothamSemibold
+    btn.Text = name
+    btn.TextColor3 = Color3.fromRGB(180, 180, 190)
+    btn.TextSize = 12
 
-createButton("Auto Select: B", 50, function(state)
-    autoB = state
-    print("[Monster] Auto Select B:", state)
-end)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = btn
 
-createButton("Auto Select: C", 100, function(state)
-    autoC = state
-    print("[Monster] Auto Select C:", state)
-end)
+    btn.MouseButton1Click:Connect(function()
+        for _, p in pairs(pages) do p.Visible = false end
+        for _, b in pairs(tabButtons) do 
+            b.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
+            b.TextColor3 = Color3.fromRGB(180, 180, 190) 
+        end
+        targetPage.Visible = true
+        btn.BackgroundColor3 = Color3.fromRGB(0, 170, 100)
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    end)
+    table.insert(tabButtons, btn)
+    return btn
+end
 
--- LOGIK: Fenster verschiebbar machen (Draggable)
+createTabButton("Combat", 12, combatPage)
+createTabButton("Settings", 52, settingsPage)
+
+-- Standardmäßig Combat-Tab anzeigen
+combatPage.Visible = true
+tabButtons[1].BackgroundColor3 = Color3.fromRGB(0, 170, 100)
+tabButtons[1].TextColor3 = Color3.fromRGB(255, 255, 255)
+
+-- Moderne Toggles mit Animation
+local function createToggle(parent, name, yPos, callback)
+    local toggleFrame = Instance.new("Frame")
+    toggleFrame.Parent = parent
+    toggleFrame.BackgroundColor3 = Color3.fromRGB(26, 26, 34)
+    toggleFrame.BorderSizePixel = 0
+    toggleFrame.Position = UDim2.new(0, 0, 0, yPos)
+    toggleFrame.Size = UDim2.new(1, 0, 0, 36)
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = toggleFrame
+
+    local label = Instance.new("TextLabel")
+    label.Parent = toggleFrame
+    label.BackgroundTransparency = 1
+    label.Position = UDim2.new(0, 12, 0, 0)
+    label.Size = UDim2.new(1, -60, 1, 0)
+    label.Font = Enum.Font.GothamMedium
+    label.Text = name
+    label.TextColor3 = Color3.fromRGB(230, 230, 230)
+    label.TextSize = 12
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local switch = Instance.new("TextButton")
+    switch.Parent = toggleFrame
+    switch.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+    switch.BorderSizePixel = 0
+    switch.Position = UDim2.new(1, -45, 0.5, -10)
+    switch.Size = UDim2.new(0, 36, 0, 20)
+    switch.AutoButtonColor = false
+    switch.Text = ""
+
+    local switchCorner = Instance.new("UICorner")
+    switchCorner.CornerRadius = UDim.new(1, 0)
+    switchCorner.Parent = switch
+
+    local circle = Instance.new("Frame")
+    circle.Parent = switch
+    circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    circle.BorderSizePixel = 0
+    circle.Position = UDim2.new(0, 2, 0.5, -8)
+    circle.Size = UDim2.new(0, 16, 0, 16)
+
+    local circleCorner = Instance.new("UICorner")
+    circleCorner.CornerRadius = UDim.new(1, 0)
+    circleCorner.Parent = circle
+
+    local state = false
+    switch.MouseButton1Click:Connect(function()
+        state = not state
+        if state then
+            switch.BackgroundColor3 = Color3.fromRGB(0, 170, 100)
+            circle:TweenPosition(UDim2.new(1, -18, 0.5, -8), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
+        else
+            switch.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+            circle:TweenPosition(UDim2.new(0, 2, 0.5, -8), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
+        end
+        callback(state)
+    end)
+end
+
+-- Toggles im Combat Tab einfügen
+createToggle(combatPage, "Auto-Select A", 0, function(v) print("Auto A:", v) end)
+createToggle(combatPage, "Auto-Select B", 44, function(v) print("Auto B:", v) end)
+createToggle(combatPage, "Auto-Select C", 88, function(v) print("Auto C:", v) end)
+
+-- Toggles im Settings Tab einfügen
+createToggle(settingsPage, "Safe Mode", 0, function(v) print("Safe Mode:", v) end)
+
+-- Draggable Logik (Zuverlässig auf der Titelleiste)
 local dragging, dragInput, dragStart, startPos
 TitleBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -151,4 +235,4 @@ UserInputService.InputBegan:Connect(function(input)
     end
 end)
 
-print("[Monster] Fully Loaded with Draggable UI & Auto-Select!")
+print("[Monster] Advanced Tabbed UI Loaded Successfully!")
